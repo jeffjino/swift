@@ -574,6 +574,14 @@ BUILTIN_MISC_OPERATION(IsBitwiseTakable, "isbitwisetakable", "n", Special)
 /// IsSameMetatype has type (Any.Type, Any.Type) -> Bool
 BUILTIN_MISC_OPERATION(IsSameMetatype, "is_same_metatype", "n", Special)
 
+/// StaticAssert has type (Int1, Builtin.RawPointer, Builtin.RawPointer, Builtin.Word) -> ()
+///
+/// Parameters: condition, message, file, line
+///
+/// file and line are used if the source location of the static assertion is
+/// invalid.
+BUILTIN_MISC_OPERATION(StaticAssert, "staticAssert", "", Special)
+
 /// Alignof has type T.Type -> Int
 BUILTIN_MISC_OPERATION(Alignof, "alignof", "n", Special)
 
