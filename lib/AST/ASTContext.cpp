@@ -1654,7 +1654,7 @@ Identifier ASTContext::getRealModuleName(Identifier key) const {
 }
 
 
-std::pair<Identifier, bool> ASTContext::getRealModuleNameWithSourceCheck(Identifier key) const {
+std::pair<Identifier, bool> ASTContext::getRealModuleNameWithVisibilityCheck(Identifier key) const {
   auto real = getRealModuleName(key);
   if (key != real) // Found the real name of the module
     return std::make_pair(real, true);
@@ -1872,15 +1872,15 @@ ModuleDecl *ASTContext::getLoadedModule(Identifier ModuleName) const {
   // and a source file has 'import Foo', a module called Bar (real name)
   // will be loaded and returned. The real name, however, should not appear
   // in source files.
-  auto result = getRealModuleNameWithSourceCheck(ModuleName);
-  if (!result.second) {
+  auto realNamecheck = getRealModuleNameWithVisibilityCheck(ModuleName);
+  if (!realNamecheck.second) {
     // If reached here, the real name appeared in source files which shouldn't
     // have happened, so return null, which will result in proper diagnostics
     // to get emitted.
     return nullptr;
   }
 
-  return getImpl().LoadedModules.lookup(result.first);
+  return getImpl().LoadedModules.lookup(realNamecheck.first);
 }
 
 void ASTContext::addLoadedModule(ModuleDecl *M) {

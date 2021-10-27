@@ -44,9 +44,9 @@ static FileOrError findModule(ASTContext &ctx, Identifier moduleID,
   // and a source file has 'import Foo', a module called Bar (real name)
   // should be searched. However, the real name should not appear in source
   // files.
-  auto result = ctx.getRealModuleNameWithSourceCheck(moduleID);
-  if (result.second) { // Check for real name references in source files passed
-    StringRef moduleNameRef = result.first.str();
+  auto realNamecheck = ctx.getRealModuleNameWithVisibilityCheck(moduleID);
+  if (realNamecheck.second) { // Check for real name references in source files passed
+    StringRef moduleNameRef = realNamecheck.first.str();
 
   for (auto Path : ctx.SearchPathOpts.ImportSearchPaths) {
     inputFilename = Path;
