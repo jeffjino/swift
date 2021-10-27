@@ -42,8 +42,11 @@ static FileOrError findModule(ASTContext &ctx, Identifier moduleID,
   //
   // For example, if '-module-alias Foo=Bar' is passed in to the frontend,
   // and a source file has 'import Foo', a module called Bar (real name)
-  // should be searched.
-  StringRef moduleNameRef = ctx.getRealModuleName(moduleID).str();
+  // should be searched. However, the real name should not appear in source
+  // files.
+  auto result = ctx.getRealModuleNameWithSourceCheck(moduleID);
+  if (result.second) { // Check for real name references in source files passed
+    StringRef moduleNameRef = result.first.str();
 
   for (auto Path : ctx.SearchPathOpts.ImportSearchPaths) {
     inputFilename = Path;
@@ -59,6 +62,7 @@ static FileOrError findModule(ASTContext &ctx, Identifier moduleID,
     auto err = FileBufOrErr.getError();
     if (err != std::errc::no_such_file_or_directory)
       return FileBufOrErr;
+  }
   }
 
   return make_error_code(std::errc::no_such_file_or_directory);

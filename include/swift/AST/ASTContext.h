@@ -487,6 +487,15 @@ public:
   /// a module alias and X is the real (physical) name. Returns \p key if no aliasing is used.
   Identifier getRealModuleName(Identifier key) const;
 
+  /// In case module aliasing is used, only the alias should appear in source files. For example, if
+  /// '-module-alias Foo=X' was passed, only the references to 'Foo' should be allowed, not 'X'.
+  ///
+  /// This checks if the real name is referenced in source files and returns false if so.
+  /// If the check passes, i.e. the real name does not appear in source files or no module aliasing is
+  /// used, it will return the real name given an alias or the argument itself (if no aliasing) and 'true'
+  /// indicating the check passed.
+  std::pair<Identifier, bool> getRealModuleNameWithSourceCheck(Identifier key) const;
+
   /// Decide how to interpret two precedence groups.
   Associativity associateInfixOperators(PrecedenceGroupDecl *left,
                                         PrecedenceGroupDecl *right) const;

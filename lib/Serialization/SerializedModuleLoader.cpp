@@ -536,10 +536,19 @@ SerializedModuleLoaderBase::findModule(ImportPath::Element moduleID,
   // Find a module with an actual, physical name on disk, in case
   // -module-alias is used (otherwise same).
   //
-  // For example, if '-module-alias Foo=Bar' is passed in to the frontend,
+  // For example, if '-module-alias Foo=Bar' is passed to the frontend,
   // and a source file has 'import Foo', a module called Bar (real name)
-  // should be searched.
-  StringRef moduleNameRef = Ctx.getRealModuleName(moduleID.Item).str();
+  // should be searched. The real name, however, should not appear in 
+  // source files.
+  auto result = Ctx.getRealModuleNameWithSourceCheck(moduleID.Item);
+  if (!result.second) {
+    // If reached here, the real name appeared in source files which shouldn't
+    // have happened, so return null, which will result in proper diagnostics
+    // to get emitted.
+    return false;
+  }
+
+  StringRef moduleNameRef = result.first.str();
   SmallString<32> moduleName(moduleNameRef);
   SerializedModuleBaseName genericBaseName(moduleName);
 

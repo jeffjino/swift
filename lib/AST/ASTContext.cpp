@@ -1653,6 +1653,21 @@ Identifier ASTContext::getRealModuleName(Identifier key) const {
   return key;
 }
 
+
+std::pair<Identifier, bool> ASTContext::getRealModuleNameWithSourceCheck(Identifier key) const {
+  auto real = getRealModuleName(key);
+  if (key != real) // Found the real name of the module
+    return std::make_pair(real, true);
+
+  for (auto entry: ModuleAliasMap) {
+    if (entry.second == key) // The key is a real module name, not an alias
+      return std::make_pair(entry.first, /* validation failed */ false);
+  }
+
+  // No module aliasing is used for the given key
+  return std::make_pair(key, true);
+}
+
 Optional<ModuleDependencies> ASTContext::getModuleDependencies(
     StringRef moduleName, bool isUnderlyingClangModule,
     ModuleDependenciesCache &cache, InterfaceSubContextDelegate &delegate,
@@ -1853,11 +1868,19 @@ ModuleDecl *ASTContext::getLoadedModule(Identifier ModuleName) const {
   // appears in source code will be different from the real module name
   // on disk, otherwise the same.
   //
-  // For example, if '-module-alias Foo=Bar' is passed in to the frontend,
+  // For example, if '-module-alias Foo=Bar' is passed to the frontend,
   // and a source file has 'import Foo', a module called Bar (real name)
-  // will be loaded and returned.
-  auto realName = getRealModuleName(ModuleName);
-  return getImpl().LoadedModules.lookup(realName);
+  // will be loaded and returned. The real name, however, should not appear
+  // in source files.
+  auto result = getRealModuleNameWithSourceCheck(ModuleName);
+  if (!result.second) {
+    // If reached here, the real name appeared in source files which shouldn't
+    // have happened, so return null, which will result in proper diagnostics
+    // to get emitted.
+    return nullptr;
+  }
+
+  return getImpl().LoadedModules.lookup(result.first);
 }
 
 void ASTContext::addLoadedModule(ModuleDecl *M) {

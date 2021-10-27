@@ -1745,8 +1745,16 @@ bool ExplicitSwiftModuleLoader::findModule(ImportPath::Element ModuleID,
   //
   // For example, if '-module-alias Foo=Bar' is passed in to the frontend, and an
   // input file has 'import Foo', a module called Bar (real name) should be searched.
-  StringRef moduleName = Ctx.getRealModuleName(ModuleID.Item).str();
+  // The real name, however, should not appear in source files.
+  auto result = Ctx.getRealModuleNameWithSourceCheck(ModuleID.Item);
+  if (!result.second) {
+    // If reached here, the real name appeared in source files which shouldn't
+    // have happened, so return null, which will result in proper diagnostics
+    // to get emitted.
+    return false;
+  }
 
+  StringRef moduleName = result.first.str();
   auto it = Impl.ExplicitModuleMap.find(moduleName);
   // If no explicit module path is given matches the name, return with an
   // error code.
